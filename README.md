@@ -188,6 +188,14 @@ private
 ## Week 3
 
 ### Mon 10, August 2020 *[Active Record Validations]*
+Se usan para validar que los datos que se guarden sean los correctos. Hacerlas desde la base de datos puede dificultar las pruebas, desde el controlador pueden ser dificiles de mnaejar, probar y mantener. Active Record utiliza el new_record? método de instancia para determinar si un objeto ya está en la base de datos o no.
+Los siguientes métodos activan validaciones y guardarán el objeto en la base de datos solo si el objeto es válido:
+create, create!, save, save!, update, update!.
+Los siguientes métodos omiten las validaciones y guardarán el objeto en la base de datos independientemente de su validez: decrement!, decrement_counter, increment!, increment_counter, toggle!, touch, update_all, update_attribute, update_column, update_columns, update_counters.
+valid? y invalid?; Antes de guardar un objeto de registro activo, Rails ejecuta sus validaciones. Si estas validaciones producen algún error, Rails no guarda el objeto.
+errors[]; Para verificar si un atributo particular de un objeto es válido, puede usar errors[:attribute]. Devuelve una matriz de todos los errores de :attribute. Si no hay errores en el atributo especificado, se devuelve una matriz vacía.
+errors.details; Para comprobar qué validaciones fallaron en un atributo no válido, puede utilizar errors.details[:attribute]. Devuelve una matriz de hashes con una :error clave para obtener el símbolo del validador.
+
 
 
 ### Tue 11, August 2020 *[Using partials]*
@@ -212,27 +220,123 @@ private
 
 
 ### Wed 19, August 2020 *[Validation helpers]*
+Los ayudantes d evalidacion proporcionan reglas ocmunes. Cuando falla una validacion se agrega un mensjae a la errors y este mensaje se asocia con el atributo que se esta validando.
+Acceptance: valida que se marcó una casilla de verificación en la interfaz de usuario cuando se envió un formulario. Esto se usa generalmente cuando el usuario necesita aceptar los términos de servicio de su aplicación, confirmar que se lee algún texto o cualquier concepto similar.
+Validates_associated: cuando su modelo tenga asociaciones con otros modelos y también necesiten ser validados. Cuando intente guardar su objeto, valid? se llamará a cada uno de los objetos asociados.
+Confirmation: se utiliza cuando se tienen dos campos de texto que deben recibir exactamente el mismo contenido. Por ejemplo, es posible que desee confirmar una dirección de correo electrónico o una contraseña. Esta validación crea un atributo virtual cuyo nombre es el nombre del campo que debe ser confirmado con "_confirmation" adjunto.
+Exclusion: valida que los valores de los atributos no estén incluidos en un conjunto dado. De hecho, este conjunto puede ser cualquier objeto enumerable.
+Format: valida los valores de los atributos probando si coinciden con una expresión regular determinada, que se especifica mediante la :withopción.
+Inclusion: valida que los valores de los atributos estén incluidos en un conjunto dado. De hecho, este conjunto puede ser cualquier objeto enumerable.
+Length: valida la longitud de los valores de los atributos. 
+Numericality: valida que sus atributos solo tengan valores numéricos. De forma predeterminada, coincidirá con un signo opcional seguido de un número de punto flotante o integral. Para especificar que solo se permiten números enteros, establézcalo :only_integeren verdadero.
+Presence: valida que los atributos especificados no estén vacíos. Utiliza el blank?método para verificar si el valor es niluna cadena en blanco, es decir, una cadena que está vacía o consta de espacios en blanco.
+Absence: Este ayudante valida que los atributos especificados estén ausentes. Utiliza el present?método para verificar si el valor no es nulo o una cadena en blanco, es decir, una cadena que está vacía o consta de espacios en blanco.
+Uniqueness: Esta validacion ocurre al realizar una consulta SQL en la tabla del modelo, buscando un registro existente con el mismo valor en ese atributo. Existe una :scopeopción que puede utilizar para especificar uno o más atributos que se utilizan para limitar la comprobación de uniqueness:
+Validates_with: El validates_withayudante toma una clase o una lista de clases para usar para la validación. No hay un mensaje de error predeterminado para validates_with. Debemos agregar errores manualmente a la colección de errores del registro en la clase de validación. Para implementar el método de validación, debe tener recorddefinido un parámetro, que es el registro a validar. Al igual que todas las demás validaciones, validates_withtoma los :if, :unlessy :onopciones. Si pasa cualquier otra opción, enviará esas opciones a la clase de validación como options.Tenemos que tener en cuenta que solo se inicializará solo una vez durante todo el ciclo de vida de la aplicación, y no en cada ejecución de validación, así que tenga cuidado con el uso de variables de instancia dentro de él.
+Validates_each: Este ayudante valida los atributos contra un bloque. No tiene una función de validación predefinida. Debe crear uno usando un bloque, y cada atributo que se le pase validates_eachse probará con él. En el siguiente ejemplo, no queremos que los nombres y apellidos comiencen con minúsculas.
+class Person < ApplicationRecord
+  validates_each :name, :surname do |record, attr, value|
+    record.errors.add(attr, 'must start with upper case') if value =~ /\A[[:lower:]]/
+  end
+end
+
 
 
 ### Thu 20, August 2020 *[Common validation options]*
+:allow_nil
+La :allow_nilopción omite la validación cuando el valor que se valida es nil.
+:allow_blank
+La :allow_blankopción es similar a la :allow_nilopción. Esta opción permitirá que pase la validación si el valor del atributo es blank?, como nilo una cadena vacía.
+:message Nos permite especificar el mensaje que se agregará a la errorscolección cuando falle la validación. Cuando no se usa esta opción, Active Record usará el mensaje de error predeterminado respectivo para cada ayudante de validación
+:on
+Permite especificar cuándo debe ocurrir la validación. El comportamiento predeterminado para todos los ayudantes de validación integrados es ejecutar al guardar (tanto cuando está creando un nuevo registro como cuando lo está actualizando).
+Validaciones estrictas: También puede especificar que las validaciones sean estrictas y que se generen ActiveModel::StrictValidationFailed cuando el objeto no es válido.
+
 
 
 ### Fri 21, August 2020 *[Conditional validations]*
-
+A veces, tendrá sentido validar un objeto solo cuando se satisfaga un predicado determinado. Puede hacerlo utilizando las opciones :ify :unless, que pueden tomar un símbolo, una Proco una Array. Puede utilizar la :if opción cuando desee especificar cuándo debe realizarse la validación . Si desea especificar cuándo no debe ocurrir la validación , puede usar la :unlessopción.
+Puede asociar las opciones :ify :unlesscon un símbolo correspondiente al nombre de un método que se llamará justo antes de que ocurra la validación. 
+Es posible asociar :ify :unlesscon un Procobjeto que será llamado. El uso de un Procobjeto le brinda la posibilidad de escribir una condición en línea en lugar de un método separado.
+Por otro lado, cuando varias condiciones definen si debe ocurrir una validación o no, Arrayse puede utilizar un. Además, puede aplicar ambos :ify :unlessa la misma validación.
 
 
 
 ## Week 5
 
 ### Mon 24, August 2020 *[Custom validations]*
+Los validadores personalizados son clases que heredan ActiveModel::Validator. Estas clases deben implementar el validatemétodo que toma un registro como argumento y realiza la validación en él. El validador personalizado se llama mediante el validates_with método.
+La forma más fácil de agregar validadores personalizados para validar atributos individuales es con la conveniente ActiveModel::EachValidator. En este caso, la clase de validación personalizada debe implementar un validate_eachmétodo que tome tres argumentos: registro, atributo y valor. Estos corresponden a la instancia, el atributo a validar y el valor del atributo en la instancia pasada.
+class EmailValidator < ActiveModel::EachValidator
+  def validate_each(record, attribute, value)
+    unless value =~ /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i
+      record.errors[attribute] << (options[:message] || "is not an email")
+    end
+  end
+end
+ 
+class Person < ApplicationRecord
+  validates :email, presence: true, email: true
+end
+
+
+
 
 ### Tue 25, August 2020 *[Validation errors]*
+Ademas de valid? y invalid? existen mas metodos que nos ayudan a trabajar con errors.
+errors: Devuelve una instancia de la clase que ActiveModel::Errorscontiene todos los errores. Cada clave es el nombre del atributo y el valor es una matriz de cadenas con todos los errores.
+errors[]: se utiliza cuando desea comprobar los mensajes de error de un atributo específico. Devuelve una matriz de cadenas con todos los mensajes de error para el atributo dado, cada cadena con un mensaje de error. 
+errors.add: Permite agregar un mensaje de error relacionado con un atributo en particular. Toma como argumentos el atributo y el mensaje de error.
+errors.details: Especifica un tipo de validador para el hash de detalles del error devuelto utilizando el error.
+errors[:base]; Puede agregar mensajes de error relacionados con el estado del objeto como un todo, en lugar de estar relacionados con un atributo específico. 
+errors.clear; Se usa cuando intencionalmente desea borrar todos los mensajes de la errorscolección. Por supuesto, llamar errors.cleara un objeto no válido no lo hará válido: la errorscolección ahora estará vacía, pero la próxima vez que llame valid?o cualquier método que intente guardar este objeto en la base de datos, las validaciones se ejecutarán nuevamente. 
+errors.size: Devuelve el número total de mensajes de error del objeto.
+
 
 
 ### Wed 26, August 2020 *[Validations errors in views]*
+Una vez que haya creado un modelo y haya agregado validaciones, si ese modelo se crea a través de un formulario web, probablemente desee mostrar un mensaje de error cuando una de las validaciones falle.
+Suponiendo que tenemos un modelo que se ha guardado en una variable de instancia denominada @article, se ve así:
+
+<% if @article.errors.any? %>
+  <div id="error_explanation">
+    <h2><%= pluralize(@article.errors.count, "error") %> prohibited this article from being saved:</h2>
+ 
+    <ul>
+    <% @article.errors.full_messages.each do |msg| %>
+      <li><%= msg %></li>
+    <% end %>
+    </ul>
+  </div>
+<% end %>
+Además, si utiliza los ayudantes de formulario de Rails para generar sus formularios, cuando se produce un error de validación en un campo, se generará un extra <div>alrededor de la entrada.
+
+<div class="field_with_errors">
+ <input id="article_title" name="article[title]" size="30" type="text" value="">
+</div>
 
 
 ### Thu 27, August 2020 *[Scaffolding]*
+Es un generador de codigo que nos ayuda realizar el CRUD de nuestra aplicacion de una manera sencilla.
+Para implementarlo en nuestra terminal escribimos "rails generate scaffold user nombre: string email:string" esto suponiendo que se desea crear el moenlo de un usuario el cual tiene nombre y email.
+Para iimplementar el post se escribe en la terminal "rails generate scaffold Post titulo:strig contenido:string user_id:integer".
+El parametro "id" es creado automaticamente por lo cual no es necesario ponerlo.
+Despues se actualiza nuestra base de batos "bundle exec rake db:migrate", con esto se catualizara nuestra database.
+Despues de hacer nuestro podemos podemos visualizarlo en localhost:3000/users, si accedemos a localhost:3000/users/post mostratra la lista de todos los post y una pagina donde podemos crear nuevos.
+Para crear una asociacion, es decir si un usuario tiene muchos post.
+>>>
+A user has many microposts.
+app/models/user.rb
+class User < ActiveRecord::Base
+  has_many :microposts
+end
+>>>
+A micropost belongs to a user.
+app/models/micropost.rb
+class Micropost < ActiveRecord::Base
+  belongs_to :user
+end
+Podmeos ver el resultado de esta asociacion poniendo en nuestra termina "rails console", "first_user=user.first" con esto nos aparece la informacion del usuario, "first_user.microposts" para ver la relacion del usuario con otros post.
 
 
 ### Fri 28, August 2020 *[Reading topic or title]*
