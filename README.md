@@ -208,15 +208,31 @@ errors.details; Para comprobar qué validaciones fallaron en un atributo no vál
 
 
 ### Fri 14, August 2020 *[Refactoring]*
-
+Cuando se tienen distintas acciones funciionando show.html.erb se vuelve largo, para evitar eso se refactoriza.
+p
 
 
 
 ## Week 4
 
 ### Mon 17, August 2020 *[Security]*
+Rails proporciona un sistema de autenticacion HTTP muy simple. En el ArticlesController podemos bloquear el acceso a distintas acciones dpendiendo la persona.  Se puede utilizar http_basic_authenticate_with que permite acceder a la accion si el metodo lo permite. 
+class ArticlesController < ApplicationController
+ 
+  http_basic_authenticate_with name: "dhh", password: "secret", except: [:index, :show]
+ 
+  def index
+    @articles = Article.all
+  end
+ con esto si intenta agregar un articulo le pedira que inicie sesion.
+
+
 
 ### Tue 18, August 2020 *[Cookies and Sessions]*
+Cookies, Sessions and Flashes are three special objects that Rails gives you in which each behave a lot like hashes. They are used to persist data between requests, whether until just the next request, until the browser is closed, or until a specified expiration has been reached. 
+Cookies are key-value data pairs that are stored in the user’s browser until they reach their specified expiration date. They can be used for pretty much anything, most commonly to “bookmark” the user’s place in a web page if she gets disconnected or to store simple site display preferences. You could also store shopping cart information or even passwords but that would be a bad idea – you shouldn’t store anything in regular browser cookies that needs to either be secure or persisted across browser sessions. It’s too easy for users to clear their cache and/or steal/manipulate unsecured cookies.
+Think about how websites keep track of how a user is logged in when the page reloads. HTTP requests are stateless so how can you tell that a given request actually came from that particular user who is logged in? This is why cookies are important – they allow you to keep track of your user from one request to another until the cookie expires.
+A special case is when you want to keep track of data in the user’s “session”, which represents all the stuff your user does while you’ve chosen to “remember” her, typically until the browser window is closed. In that case, every page she visits until the browser is closed will be part of the same session.
 
 
 ### Wed 19, August 2020 *[Validation helpers]*
