@@ -199,18 +199,82 @@ errors.details; Para comprobar qué validaciones fallaron en un atributo no vál
 
 
 ### Tue 11, August 2020 *[Using partials]*
+Nuestro formulario de edit aparece mucho en la pagina "new" y ambos comparten el mismo codigo por lo que se usa una vista parcial para elimiar esta duplicidad, por conveccion los archivos parciales se escriben con "_" al inicio. Por ejemplo:
+<%= form_with model: @article, local: true do |form| %>
+ 
+  <% if @article.errors.any? %>
+    <div id="error_explanation">
+      <h2>
+        <%= pluralize(@article.errors.count, "error") %> prohibited
+        this article from being saved:
+      </h2>
+      <ul>
+        <% @article.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+ 
+  <p>
+    <%= form.label :title %><br>
+    <%= form.text_field :title %>
+  </p>
+ 
+  <p>
+    <%= form.label :text %><br>
+    <%= form.text_area :text %>
+  </p>
+ 
+  <p>
+    <%= form.submit %>
+  </p>
+ 
+<% end %>
+
+como se observa todo execto "form_with" permanecio igual. Para utilizar la vista y usar este parcial
+h1>New Article</h1>
+ 
+<%= render 'form' %>
+ 
+<%= link_to 'Back', articles_path %>
+
+Luego se hace lo mismo para la vista edit:
+
+<h1>Edit Article</h1>
+ 
+<%= render 'form' %>
+ 
+<%= link_to 'Back', articles_path %>
+
 
 
 ### Wed 12, August 2020 *[Delete data]*
+Para eliminar un articulo de la base de datos de agrega la ruta "Delete /articles/:id(.:format)    articles#destroy
+El metodo destroy e sgeneralmente la ultima accion en el controlador al igual que otras acciones publicas.
+def destroy
+  @article = Article.find(params[:id])
+  @article.destroy
+ 
+  redirect_to articles_path
+end
 
+Para borrar algo de la base de datos, se invoca el objecto destroy de Active Records 
 
 ### Thu 13, August 2020 *[Associating models]*
+Primero se debera generar el modelo desde la terminal "rails generate model Comment commenter:string body:text article:references", esto es muy similir al modelo de articulos.
+Una vez migrado se asocia el modelo, para esto se crea una relacion, Cada comentario pertenece a un articulo y un articulo puede tener muchos comentarios.
+La linea "belongs_to :article" hace que cada cimentario pertenezca a un articulo, por otro lado tambien se debera editar nuestro modelo de articulo, "has_many :comments".
+Tambien se agrega la ruta de comentarios de la siguiente manera :
+resources :articles do
+  resources :comments
+end
+y se genera el controlador desde la terminal "rails generate controller Comments", ahora lo unico que resta son las vistas, para ello conectaremos la plantilla de presentacion del articulo y asi nos permita hacer un nuevo comentario de este.
+
 
 
 ### Fri 14, August 2020 *[Refactoring]*
-Cuando se tienen distintas acciones funciionando show.html.erb se vuelve largo, para evitar eso se refactoriza.
-p
-
+Cuando se tienen distintas acciones funciionando show.html.erb se vuelve largo, para evitar eso se refactoriza. Primero se hace comentarios parcial para extraer mostrando todos los comentarios del articulo, posteriormente se camvia la vista show, con esto se logra representar el parcial en _Comment una vez que el comentario este en la @article.comments. A medida que el metodo rende ritera sobre la article.comments se asigna cada comentario a una variable local denominada igual que el parcial y en este caso comment, que luego esta disponible en el parcial para que la mostremos.
 
 
 ## Week 4
